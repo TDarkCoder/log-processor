@@ -1,0 +1,15 @@
+.git
+.gitignore
+.idea
+.claude
+.env
+.env.local
+.env.*.local
+.dockerignore
+docker-compose.yml
+docker/
+tests/
+var/
+vendor/
+README.md
+phpunit.xml.dist

@@ -7,21 +7,13 @@ namespace App\Service;
 use App\DTO\LogBatchRequestDTO;
 use App\DTO\LogEntryDTO;
 use App\DTO\ValidationErrorDTO;
+use App\Enum\LogLevel;
+use DateTimeImmutable;
+use DateTimeInterface;
 
 final class LogValidatorService
 {
     private const int MAX_BATCH_SIZE = 1000;
-
-    private const array VALID_LEVELS = [
-        'emergency',
-        'alert',
-        'critical',
-        'error',
-        'warning',
-        'notice',
-        'info',
-        'debug',
-    ];
 
     /**
      * @return ValidationErrorDTO[]
@@ -60,11 +52,11 @@ final class LogValidatorService
 
         if ($log->level === '') {
             $errors[] = new ValidationErrorDTO($index, 'level', 'This field is required.');
-        } elseif (!in_array(strtolower($log->level), self::VALID_LEVELS, strict: true)) {
+        } elseif (LogLevel::tryFromInsensitive($log->level) === null) {
             $errors[] = new ValidationErrorDTO(
                 $index,
                 'level',
-                sprintf('Invalid level. Allowed values: %s.', implode(', ', self::VALID_LEVELS)),
+                sprintf('Invalid level. Allowed values: %s.', implode(', ', LogLevel::values())),
             );
         }
 
@@ -81,8 +73,8 @@ final class LogValidatorService
 
     private function isValidTimestamp(string $timestamp): bool
     {
-        $dt = \DateTimeImmutable::createFromFormat(\DateTimeInterface::ATOM, $timestamp)
-            ?: \DateTimeImmutable::createFromFormat('Y-m-d\TH:i:s\Z', $timestamp);
+        $dt = DateTimeImmutable::createFromFormat(DateTimeInterface::ATOM, $timestamp)
+            ?: DateTimeImmutable::createFromFormat('Y-m-d\TH:i:s\Z', $timestamp);
 
         return $dt !== false;
     }

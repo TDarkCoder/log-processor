@@ -8,5 +8,6 @@ services:
         resource: '../src/'
         exclude:
             - '../src/DTO/'
+            - '../src/Enum/'
             - '../src/Message/'
             - '../src/Kernel.php'

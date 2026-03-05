@@ -3,3 +3,5 @@ framework:
         transports:
             async:
                 dsn: 'in-memory://'
+            failed:
+                dsn: 'in-memory://'

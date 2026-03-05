@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\DTO;
 
-final class LogBatchResponseDTO
+final class LogBatchResponseDTO implements \JsonSerializable
 {
     public function __construct(
         public readonly string $status,
@@ -22,5 +22,13 @@ final class LogBatchResponseDTO
             'batch_id' => $this->batchId,
             'logs_count' => $this->logsCount,
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 }

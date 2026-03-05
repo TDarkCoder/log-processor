@@ -5,7 +5,7 @@ RUN apk add --no-cache \
     rabbitmq-c-dev \
     $PHPIZE_DEPS \
     && pecl install amqp \
-    && docker-php-ext-enable amqp \
+    && docker-php-ext-enable amqp opcache \
     && apk del $PHPIZE_DEPS
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -14,10 +14,10 @@ WORKDIR /var/www/app
 
 COPY composer.json composer.lock* ./
 
-RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interaction
+RUN composer install --no-dev --classmap-authoritative --no-scripts --no-interaction
 
 COPY . .
 
-RUN composer dump-autoload --optimize
+RUN composer dump-autoload --classmap-authoritative
 
 EXPOSE 9000

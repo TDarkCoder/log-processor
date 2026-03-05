@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\DTO;
 
-final class ValidationErrorDTO
+final class ValidationErrorDTO implements \JsonSerializable
 {
     public function __construct(
         public readonly int $index,
@@ -22,5 +22,13 @@ final class ValidationErrorDTO
             'field' => $this->field,
             'message' => $this->message,
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\DTO;
 
-final class LogEntryDTO
+final class LogEntryDTO implements \JsonSerializable
 {
     /**
      * @param array<string, mixed> $context
@@ -38,13 +38,26 @@ final class LogEntryDTO
      */
     public function toArray(): array
     {
-        return [
+        $data = [
             'timestamp' => $this->timestamp,
             'level' => $this->level,
             'service' => $this->service,
             'message' => $this->message,
             'context' => $this->context,
-            'trace_id' => $this->traceId,
         ];
+
+        if ($this->traceId !== null) {
+            $data['trace_id'] = $this->traceId;
+        }
+
+        return $data;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 }

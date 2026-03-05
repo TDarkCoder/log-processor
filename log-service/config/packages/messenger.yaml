@@ -1,8 +1,15 @@
 framework:
     messenger:
+        failure_transport: failed
+
         transports:
             async:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                retry_strategy:
+                    max_retries: 3
+                    delay: 1000
+                    multiplier: 2
+                    max_delay: 60000
                 options:
                     exchange:
                         name: logs
@@ -10,9 +17,19 @@ framework:
                         default_publish_routing_key: logs.ingest
                     queues:
                         logs.ingest:
-                            durable: true
+                            flags: 2
                             arguments:
                                 x-max-priority: 10
+
+            failed:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    exchange:
+                        name: logs_failed
+                        type: direct
+                    queues:
+                        logs.failed:
+                            flags: 2
 
         routing:
             App\Message\LogBatchMessage: async

@@ -6,34 +6,35 @@ namespace App\Controller;
 
 use App\DTO\LogBatchRequestDTO;
 use App\DTO\LogBatchResponseDTO;
+use App\DTO\LogEntryDTO;
+use App\Enum\LogLevel;
 use App\Message\LogBatchMessage;
 use App\Service\LogValidatorService;
+use DateMalformedStringException;
+use DateTimeImmutable;
+use DateTimeInterface;
+use DateTimeZone;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
 use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\Exception\ExceptionInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Uid\Uuid;
 
-final class LogIngestionController
+#[AsController]
+final readonly class LogIngestionController
 {
-    private const array LEVEL_PRIORITIES = [
-        'emergency' => 10,
-        'alert' => 9,
-        'critical' => 8,
-        'error' => 7,
-        'warning' => 5,
-        'notice' => 3,
-        'info' => 2,
-        'debug' => 1,
-    ];
-
     public function __construct(
-        private readonly MessageBusInterface $bus,
-        private readonly LogValidatorService $validator,
+        private MessageBusInterface $bus,
+        private LogValidatorService $validator,
     ) {}
 
+    /**
+     * @throws ExceptionInterface|DateMalformedStringException
+     */
     public function ingest(Request $request): JsonResponse
     {
         $body = json_decode($request->getContent(), associative: true);
@@ -52,12 +53,12 @@ final class LogIngestionController
             return new JsonResponse([
                 'status' => 'error',
                 'message' => 'Validation failed.',
-                'errors' => array_map(static fn ($e) => $e->toArray(), $errors),
+                'errors' => $errors,
             ], Response::HTTP_BAD_REQUEST);
         }
 
         $batchId = sprintf('batch_%s', str_replace('-', '', Uuid::v4()->toRfc4122()));
-        $publishedAt = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(\DateTimeInterface::ATOM);
+        $publishedAt = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
 
         $message = new LogBatchMessage(
             batchId: $batchId,
@@ -75,11 +76,10 @@ final class LogIngestionController
             logsCount: count($dto->logs),
         );
 
-        return new JsonResponse($response->toArray(), Response::HTTP_ACCEPTED);
+        return new JsonResponse($response, Response::HTTP_ACCEPTED);
     }
 
     /**
-     * @param \App\DTO\LogEntryDTO[] $logs
      * @return AmqpStamp[]
      */
     private function resolveStamps(int $priority): array
@@ -92,19 +92,17 @@ final class LogIngestionController
     }
 
     /**
-     * @param \App\DTO\LogEntryDTO[] $logs
+     * @param LogEntryDTO[] $logs
      */
     private function resolveBatchPriority(array $logs): int
     {
-        $maxPriority = 1;
-
-        foreach ($logs as $log) {
-            $priority = self::LEVEL_PRIORITIES[strtolower($log->level)] ?? 1;
-            if ($priority > $maxPriority) {
-                $maxPriority = $priority;
-            }
-        }
-
-        return $maxPriority;
+        return array_reduce(
+            $logs,
+            static fn (int $max, LogEntryDTO $log): int => max(
+                $max,
+                LogLevel::tryFromInsensitive($log->level)?->priority() ?? 1,
+            ),
+            1,
+        );
     }
 }

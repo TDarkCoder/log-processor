@@ -6,4 +6,3 @@ framework:
     handle_all_throwables: true
     php_errors:
         log: true
-    test: '%env(bool:APP_TEST)%'
