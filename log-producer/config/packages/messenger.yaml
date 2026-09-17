@@ -17,6 +17,7 @@ framework:
                         default_publish_routing_key: logs.ingest
                     queues:
                         logs.ingest:
+                            binding_keys: ['logs.ingest']
                             flags: 2
                             arguments:
                                 x-max-priority: 10
