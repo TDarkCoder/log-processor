@@ -1,6 +1,6 @@
 {
-    "name": "log-service/log-service",
-    "description": "Microservice for collecting, processing, and indexing logs via RabbitMQ",
+    "name": "log-service/log-producer",
+    "description": "Microservice for producing logs in RabbitMQ",
     "type": "project",
     "license": "proprietary",
     "require": {

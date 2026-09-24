@@ -1,15 +1,16 @@
-FROM php:8.3-fpm-alpine
+FROM php:8.5-fpm-alpine
 
 ARG DOCKER_UID=1000
 ARG DOCKER_GID=1000
 
 RUN --mount=type=cache,target=/var/cache/apk \
     apk add --no-cache \
-    bash \
+    postgresql-dev \
     rabbitmq-c-dev \
     $PHPIZE_DEPS \
+    && docker-php-ext-install -j$(nproc) pdo_pgsql pgsql \
     && pecl install amqp \
-    && docker-php-ext-enable amqp opcache \
+    && docker-php-ext-enable amqp \
     && apk del $PHPIZE_DEPS
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
